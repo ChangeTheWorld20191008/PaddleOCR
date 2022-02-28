@@ -237,8 +237,9 @@ class TextDetector(object):
             raise NotImplementedError
 
         #self.predictor.try_shrink_memory()
-        post_result = self.postprocess_op(preds, shape_list)
+        post_result, score_result = self.postprocess_op(preds, shape_list)
         dt_boxes = post_result[0]['points']
+        score = score_result[0]['score']
         if (self.det_algorithm == "SAST" and
                 self.det_sast_polygon) or (self.det_algorithm == "PSE" and
                                            self.det_pse_box_type == 'poly'):
@@ -249,7 +250,7 @@ class TextDetector(object):
         if self.args.benchmark:
             self.autolog.times.end(stamp=True)
         et = time.time()
-        return dt_boxes, et - st
+        return dt_boxes, et - st, score
 
 
 if __name__ == "__main__":
@@ -258,7 +259,7 @@ if __name__ == "__main__":
     text_detector = TextDetector(args)
     count = 0
     total_time = 0
-    draw_img_save = "./inference_results"
+    draw_img_save = args.draw_img_save_dir
 
     if args.warmup:
         img = np.random.uniform(0, 255, [640, 640, 3]).astype(np.uint8)
@@ -276,7 +277,9 @@ if __name__ == "__main__":
             logger.info("error in loading image:{}".format(image_file))
             continue
         st = time.time()
-        dt_boxes, _ = text_detector(img)
+        dt_boxes, _, score = text_detector(img)
+        print(f"[INFO]: dt_boxes is {dt_boxes}")
+        print(f"[INFO]: score is {score}")
         elapse = time.time() - st
         if count > 0:
             total_time += elapse
@@ -292,6 +295,9 @@ if __name__ == "__main__":
                                 "det_res_{}".format(img_name_pure))
         cv2.imwrite(img_path, src_im)
         logger.info("The visualized image saved in {}".format(img_path))
+
+    logger.info(
+        f"[INFO]: The predict ave time is {total_time/len(image_file_list)}")
 
     with open(os.path.join(draw_img_save, "det_results.txt"), 'w') as f:
         f.writelines(save_results)

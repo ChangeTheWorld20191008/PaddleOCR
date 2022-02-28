@@ -177,6 +177,7 @@ class DBPostProcess(object):
         segmentation = pred > self.thresh
 
         boxes_batch = []
+        scores_batch = []
         for batch_index in range(pred.shape[0]):
             src_h, src_w, ratio_h, ratio_w = shape_list[batch_index]
             if self.dilation_kernel is not None:
@@ -189,7 +190,8 @@ class DBPostProcess(object):
                                                    src_w, src_h)
 
             boxes_batch.append({'points': boxes})
-        return boxes_batch
+            scores_batch.append({'score': scores})
+        return boxes_batch, scores_batch
 
 
 class DistillationDBPostProcess(object):

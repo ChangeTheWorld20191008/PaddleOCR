@@ -127,6 +127,10 @@ def init_args():
 
     parser.add_argument("--show_log", type=str2bool, default=True)
     parser.add_argument("--use_onnx", type=str2bool, default=False)
+
+    # supplement
+    parser.add_argument("--video_file", type=str, default=None)
+    parser.add_argument("--video_save_file", type=str, default=None)
     return parser
 
 
