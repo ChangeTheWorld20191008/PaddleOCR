@@ -264,29 +264,32 @@ def draw_bounding_box(img, boxes, scores):
     return img
 
 
-def text_and_car_iou(car_box, text_box):
+def main_and_inter_iou(main_box, inter_box):
     # determine the (x, y)-coordinates of the intersection rectangle
-    xA = max(car_box[0], text_box[0])
-    yA = max(car_box[1], text_box[1])
-    xB = min(car_box[2], text_box[2])
-    yB = min(car_box[3], text_box[3])
+    xA = max(main_box[0], inter_box[0])
+    yA = max(main_box[1], inter_box[1])
+    xB = min(main_box[2], inter_box[2])
+    yB = min(main_box[3], inter_box[3])
 
     # compute the area of intersection rectangle
-    interArea = abs(max((xB - xA, 0)) * max((yB - yA), 0))
-    if interArea == 0:
-        return 0
+    inter_area = abs(max((xB - xA, 0)) * max((yB - yA), 0))
+    if inter_area == 0:
+        return 0, 0
     # compute the area of both the prediction and ground-truth
     # rectangles
-    text_box_Area = abs(
-        (text_box[2] - text_box[0]) * (text_box[3] - text_box[1]))
+    main_box_area = abs(
+        (main_box[2] - main_box[0]) * (main_box[3] - main_box[1]))
+    inter_box_area = abs(
+        (inter_box[2] - inter_box[0]) * (inter_box[3] - inter_box[1]))
 
     # compute the intersection over union by taking the intersection
     # area and dividing it by the sum of prediction + ground-truth
     # areas - the interesection area
-    iou = interArea / float(text_box_Area)
+    main_iou = inter_area / float(main_box_area)
+    all_iou = inter_area / float(inter_box_area + main_box_area - inter_area)
 
     # return the intersection over union value
-    return iou
+    return main_iou, all_iou
 
 
 def aspect_ratio_filter(box, aspect_ratio_list):
@@ -296,6 +299,8 @@ def aspect_ratio_filter(box, aspect_ratio_list):
 
     euc_dis_x = ((p_one[0]-p_two[0])**2+(p_one[1]-p_two[1])**2)**0.5
     euc_dis_y = ((p_one[0]-p_three[0])**2+(p_one[1]-p_three[1])**2)**0.5
+
+    logger.info(f"[TMP]: aspect ratio is {euc_dis_x/euc_dis_y}")
 
     if aspect_ratio_list[0] <= euc_dis_x/euc_dis_y <= aspect_ratio_list[1]:
         return True
